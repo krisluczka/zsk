@@ -63,234 +63,220 @@ namespace zsk {
 		std::ifstream file( path );
 		if ( !file.good() ) return false;
 		std::string code_line;
-		int_fast32_t argument;
 
-		// za�adowywanie komend do bloku kodu
+		// loading the file into the code
 		while ( std::getline( file, code_line ) ) {
+			std::vector<std::string> tokens;
+			std::istringstream iss( code_line );
+			std::string token;
 
-			// komenda wrzucania na stos
-			if ( code_line.substr( 0, 4 ) == "push" ) {
+			// tokenization
+			while ( iss >> token )
+				tokens.push_back( token );
+
+			// push - pushing the number on the stack
+			if ( tokens[0] == "push" ) {
 				lines.push_back( 1 );
-				if ( code_line.substr( 4, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
+				if ( tokens.size() > 1 ) {
+					arguments.push_back( std::stoi( tokens[1] ) );
 				} else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid argument, nothing to push on a stack." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid argument, nothing to push on a stack. \n";
 				}
 			}
 
-			// komenda drukowania stosu
-			else if ( code_line.substr( 0, 5 ) == "stack" ) {
+			// stack - printing the stack
+			else if ( tokens[0] == "stack" ) {
 				lines.push_back( 2 );
-				if ( code_line.substr( 5, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda zrzucania ze stosu
-			else if ( code_line.substr( 0, 3 ) == "pop" ) {
+			// pop - popping the last value
+			else if ( tokens[0] == "pop" ) {
 				lines.push_back( 3 );
-				if ( code_line.substr( 3, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 3, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda wy�wietlaj�ca znaki ascii
-			else if ( code_line.substr( 0, 5 ) == "print" ) {
+			// print - ascii characters printing
+			else if ( tokens[0] == "print" ) {
 				lines.push_back( 4 );
-				if ( code_line.substr( 5, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda wykonuj�ca obliczenia
+			// calc - evaluating an expression
 			else if ( code_line.substr( 0, 4 ) == "calc" ) {
 				lines.push_back( 5 );
-				std::string* calcval = new std::string;
-				*calcval = code_line.substr( 4, 256 );
+				std::string* calcval( new std::string );
+				for ( uint_fast64_t i( 1 ); i < tokens.size(); ++i )
+					*calcval += tokens[i] + " ";
+
 				if ( calcval->size() > 1 ) {
 					expressions.push_back( calcval );
 					arguments.push_back( expressions.size() - 1 );
 				} else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid expression, nothing to calculate." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid expression, nothing to calculate.\n";
 				}
 			}
 
-			// komenda wy��czaj�ca program lub w�tek
-			else if ( code_line.substr( 0, 4 ) == "kill" ) {
+			// kill - terminating the code
+			else if ( tokens[0] == "kill" ) {
 				lines.push_back( 6 );
-				if ( code_line.substr( 4, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 3 ) == "if=" ) {
+			// if= - comparing two stack numbers
+			else if ( tokens[0] == "if=" ) {
 				lines.push_back( 7 );
-				if ( code_line.substr( 4, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "if> " ) {
+			// if> - comparing two stack numbers
+			else if ( tokens[0] == "if> " ) {
 				lines.push_back( 8 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "if< " ) {
+			// if< - comparing two stack numbers
+			else if ( tokens[0] == "if<" ) {
 				lines.push_back( 9 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "if>=" ) {
+			// if>= - comparing two stack numbers
+			else if ( tokens[0] == "if>=" ) {
 				lines.push_back( 10 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "if<=" ) {
+			// if<= - comparing two stack numbers
+			else if ( tokens[0] == "if<=" ) {
 				lines.push_back( 11 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 3 ) == "if!" ) {
+			// if! - comparing two stack numbers
+			else if ( tokens[0] == "if!" ) {
 				lines.push_back( 12 );
-				if ( code_line.substr( 4, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda p�tlowa
-			else if ( code_line.substr( 0, 4 ) == "loop" ) {
+			// loop - loop command
+			else if ( tokens[0] == "loop" ) {
 				lines.push_back( 13 );
-				if ( code_line.substr( 4, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda pobieraj�ca ci�g znak�w od u�ytkownika
-			else if ( code_line.substr( 0, 9 ) == "getstring" ) {
+			// getstring - getting a string from user
+			else if ( tokens[0] == "getstring" ) {
 				lines.push_back( 14 );
-				if ( code_line.substr( 9, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 9, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda pobieraj�ca liczb� od u�ytkownika
-			else if ( code_line.substr( 0, 10 ) == "getinteger" ) {
+			// getinteger - getting an integer from user
+			else if ( tokens[0] == "getinteger" ) {
 				lines.push_back( 15 );
-				if ( code_line.substr( 10, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 10, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda skoku bezwarunkowego
-			else if ( code_line.substr( 0, 4 ) == "jump" ) {
+			// jump - unconditional jump
+			else if ( tokens[0] == "jump" ) {
 				lines.push_back( 16 );
-				if ( code_line.substr( 4, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda kopiuj�ca kolejne liczby stosu
+			// copy - copying given amount of stack numbers
 			else if ( code_line.substr( 0, 4 ) == "copy" ) {
 				lines.push_back( 17 );
-				if ( code_line.substr( 4, 11 ).size() > 1 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda wykonuj�ca obliczenia ( z kopi� stosu )
-			else if ( code_line.substr( 0, 5 ) == "~calc" ) {
+			// ~calc - evaluating an expression with stack copy
+			else if ( tokens[0] == "~calc" ) {
 				lines.push_back( 18 );
-				std::string* calcval = new std::string;
-				*calcval = code_line.substr( 5, 256 );
+				std::string* calcval( new std::string );
+				for ( uint_fast64_t i( 1 ); i < tokens.size(); ++i )
+					*calcval += tokens[i] + " ";
+
 				if ( calcval->size() > 1 ) {
 					expressions.push_back( calcval );
 					arguments.push_back( expressions.size() - 1 );
 				} else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid expression, nothing to calculate." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid expression, nothing to calculate.\n";
 				}
 			}
 
-			// komenda wrzucaj�ca ci�g znak�w na stos
+			// string - pushing ascii characters onto stack
 			else if ( code_line.substr( 0, 6 ) == "string" ) {
 				lines.push_back( 19 );
 				std::string* strval = new std::string;
@@ -301,117 +287,107 @@ namespace zsk {
 				} else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid expression, no string to push on stack." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid expression, no string to push on stack.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "~if=" ) {
+			// ~if= - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if=" ) {
 				lines.push_back( 20 );
-				if ( code_line.substr( 4, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 5 ) == "~if> " ) {
+			// ~if> - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if> " ) {
 				lines.push_back( 21 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 5 ) == "~if< " ) {
+			// ~if< - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if<" ) {
 				lines.push_back( 22 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 5 ) == "~if>=" ) {
+			// ~if>= - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if>=" ) {
 				lines.push_back( 23 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 5 ) == "~if<=" ) {
+			// ~if<= - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if<=" ) {
 				lines.push_back( 24 );
-				if ( code_line.substr( 5, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 5, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda por�wnuj�ca dwie liczby ze stosu
-			else if ( code_line.substr( 0, 4 ) == "~if!" ) {
+			// ~if! - comparing two stack numbers based on stack's copy
+			else if ( tokens[0] == "~if!" ) {
 				lines.push_back( 25 );
-				if ( code_line.substr( 4, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 4, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else {
 					arguments.push_back( -1 );
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
 			}
 
-			// komenda generuj�ca losow� liczb�
-			else if ( code_line.substr( 0, 6 ) == "random" ) {
+			// random - random number generator
+			else if ( tokens[0] == "random" ) {
 				lines.push_back( 26 );
-				if ( code_line.substr( 6, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 6, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda odwracaj�ca stos
-			else if ( code_line.substr( 0, 7 ) == "reverse" ) {
+			// reverse - reversing the stack
+			else if ( tokens[0] == "reverse" ) {
 				lines.push_back( 27 );
-				if ( code_line.substr( 7, 11 ).size() > 0 ) {
-					argument = std::stoi( code_line.substr( 7, 11 ) );
-					arguments.push_back( argument );
-				} else {
+				if ( tokens.size() > 1 )
+					arguments.push_back( std::stoi( tokens[1] ) );
+				else
 					arguments.push_back( -1 );
-				}
 			}
 
-			// komenda zwracaj�ca wielko�� stosu
-			else if ( code_line.substr( 0, 4 ) == "size" ) {
+			// size - returning stack size
+			else if ( tokens[0] == "size" ) {
 				lines.push_back( 28 );
 				arguments.push_back( -1 );
 			}
 
-			// brak komendy
+			// no command
 			else {
 				//lines.push_back( 0 );
 				//arguments.push_back( -1 );

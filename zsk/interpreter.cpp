@@ -15,39 +15,46 @@ namespace zsk {
 
 	void interpreter::main_loop() {
 		std::string input;
-		std::cout << "ZSK prerelease 24.0, by Krzysztof Luczka" << std::endl;
+		std::cout << "ZSK prerelease 24.0, by Krzysztof Luczka\n";
 		while ( true ) {
 			std::cout << " >>  ";
 			getline( std::cin, input );
+			std::vector<std::string> tokens;
+			std::istringstream iss( input );
+			std::string token;
 
-			// help  - pomoc
-			if ( input.substr( 0, 4 ) == "help" ) {
-				std::cout << " - help           - wyswietla pomoc dot. komend interpretatora" << std::endl;
-				std::cout << " - load <sciezka> - zaladowuje program do interpretatora" << std::endl;
-				std::cout << " - run            - uruchamia program" << std::endl;
-				std::cout << " - debug          - zmienia tryb debugowania w interpretatorze" << std::endl;
+			// tokenization
+			while ( iss >> token )
+				tokens.push_back( token );
+
+			// help
+			if ( tokens[0] == "help" ) {
+				std::cout << " - help           - displays the info about interpreter's commands\n";
+				std::cout << " - load <path>    - loads the program\n";
+				std::cout << " - run            - runs the program\n";
+				std::cout << " - debug          - changes the interpreter's debug flag\n";
 			}
 
-			// load  - �adowanie programu
-			else if ( input.substr( 0, 4 ) == "load" ) {
-				if ( load_program( input.substr( 5, 4096 ) ) )
-					std::cout << " Poprawnie zaladowano program. " << std::endl;
+			// load
+			else if ( tokens[0] == "load" ) {
+				if ( tokens.size() > 1 && load_program( tokens[1] ) )
+					std::cout << " Program loaded correctly.\n";
 				else
-					std::cout << " Nie znaleziono pliku. " << std::endl;
+					std::cout << " Invalid path. \n";
 			}
 
-			// run  -  uruchamianie programu	
-			else if ( input.substr( 0, 3 ) == "run" ) {
-				system( "cls" );
+			// run
+			else if ( tokens[0] == "run" ) {
+				//system( "cls" );
 				run_program();
 				break;
 			}
 
-			// debug - tryb debugowania kodu	
-			else if ( input.substr( 0, 5 ) == "debug" ) {
+			// debug
+			else if ( tokens[0] == "debug" ) {
 				debug = !debug;
-				if ( debug ) std::cout << " Wlaczono tryb debugowania." << std::endl;
-				else std::cout << " Wylaczono tryb debugowania." << std::endl;
+				if ( debug ) std::cout << " Debugging mode on. \n";
+				else std::cout << " Debugging mode off. \n";
 			}
 		}
 	}

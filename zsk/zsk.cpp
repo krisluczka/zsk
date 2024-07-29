@@ -1,7 +1,7 @@
 ﻿#include <iostream>
-
-using namespace std;
+#include "interpreter.h"
 
 int main() {
-    std::cout << "Hello World!\n";
+    zsk::interpreter code;
+    code.main_loop();
 }

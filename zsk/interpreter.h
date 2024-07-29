@@ -14,52 +14,52 @@
 #include <stdlib.h>
 #include <time.h>
 
-namespace zsk23 {
+namespace zsk {
 	class interpreter {
 		public:
 			// konstruktor
-		interpreter();
+			interpreter();
 
-		// destruktor
-		~interpreter();
+			// destruktor
+			~interpreter();
 
-		// g��wna p�tla intepretera, umo�liwiaj�ca kontakt z u�ytkownikiem
-		void main_loop();
+			// g��wna p�tla intepretera, umo�liwiaj�ca kontakt z u�ytkownikiem
+			void main_loop();
 
-		// funkcja wczytuj�ca program z wbudowanym preprocesorem
-		bool load_program( std::string path );
+			// funkcja wczytuj�ca program z wbudowanym preprocesorem
+			bool load_program( std::string path );
 
-		// funkcja wykonuj�ca za�adowany program
-		void run_program();
+			// funkcja wykonuj�ca za�adowany program
+			void run_program();
 
-		// funkcja ewaluuj�ca wynik odwrotnej notacji polskiej
-		int_fast32_t evaluate_prn( std::string expression );
-		int_fast32_t evaluate_prn_copy( std::string expression );
+			// funkcja ewaluuj�ca wynik odwrotnej notacji polskiej
+			int_fast32_t evaluate_prn( std::string expression );
+			int_fast32_t evaluate_prn_copy( std::string expression );
 
 		private:
 			// kontener na za�adowane indeksy linii kodu
-		std::vector<uint_fast8_t> lines;
+			std::vector<uint_fast8_t> lines;
 
-		// kontener na za�adowane argumenty komend
-		std::vector<int_fast32_t> arguments;
+			// kontener na za�adowane argumenty komend
+			std::vector<int_fast32_t> arguments;
 
-		// kontener na przechowywanie wyra�e�
-		std::vector<std::string*> expressions;
+			// kontener na przechowywanie wyra�e�
+			std::vector<std::string*> expressions;
 
-		// stos programu
-		std::stack<int_fast32_t> main_stack;
+			// stos programu
+			std::stack<int_fast32_t> main_stack;
 
-		// wska�nik do pozycji w kodzie
-		uint_fast64_t code_position;
+			// wska�nik do pozycji w kodzie
+			uint_fast64_t code_position;
 
-		// pseudorejestry do por�wnywania
-		int_fast32_t registerA, registerB;
+			// pseudorejestry do por�wnywania
+			int_fast32_t registerA, registerB;
 
-		// liczniki do p�tli
-		int_fast32_t loop_counter, loop_amount, loop_code_position, loop_final_position;
+			// liczniki do p�tli
+			int_fast32_t loop_counter, loop_amount, loop_code_position, loop_final_position;
 
-		// flagi interpretera
-		bool debug;
+			// flagi interpretera
+			bool debug;
 	};
 }
 

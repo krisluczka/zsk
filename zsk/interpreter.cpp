@@ -400,8 +400,6 @@ namespace zsk {
 	}
 
 	void interpreter::run_program() {
-		srand( time( NULL ) );
-
 		// additional info about debugging mode
 		if ( debug ) {
 			uint_fast64_t size = lines.size();
@@ -696,7 +694,7 @@ namespace zsk {
 
 			// rpn with stack copy
 			else if ( lines[code_position] == 18 ) {
-				main_stack.push( evaluate_prn_copy( *expressions[arguments[code_position]] ) );
+				main_stack.push( evaluate_prn( *expressions[arguments[code_position]], true ) );
 				++code_position;
 			}
 
@@ -718,7 +716,6 @@ namespace zsk {
 				++code_position;
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� r�wne
 			else if ( lines[code_position] == 20 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -726,19 +723,16 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB == registerA ) {
 						++code_position;
-					}
-					
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 					main_stack.push( registerB );
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
@@ -752,7 +746,7 @@ namespace zsk {
 					main_stack.pop();
 
 					// staying if the expression is true
-					if ( registerB == registerA ) {
+					if ( registerB > registerA ) {
 						++code_position;
 						continue;
 					}
@@ -827,7 +821,7 @@ namespace zsk {
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
@@ -920,13 +914,11 @@ namespace zsk {
 		system( "pause > nul" ); // ?
 	}
 
-	/*
-		Ewaluacja wyra�enia z polskiej notacji wyk�adniczej
-	*/
-	int_fast32_t interpreter::evaluate_prn( std::string expression ) {
-		std::string operation_string = "";
-		uint_fast32_t operation_index = 0;
-		int_fast32_t number_a = 0, number_b = 0;
+	int_fast32_t interpreter::evaluate_prn( std::string expression, bool copy ) {
+		std::string operation_string( "" );
+		uint_fast32_t operation_index( 0 );
+		int_fast32_t number_a( 0 ), number_b( 0 );
+		std::stack<int_fast32_t> copy_stack( main_stack );
 
 		for ( uint_fast32_t i( 0 ); i < expression.size(); ++i ) {
 			if ( (expression[i] == '+') || (expression[i] == '-') || (expression[i] == '*') || (expression[i] == '/') || (expression[i] == '%') ) {
@@ -955,9 +947,8 @@ namespace zsk {
 						continue;
 					}
 				} else {
-					if ( debug ) {
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
-					}
+					if ( debug )
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					return 0;
 				}
 			} else {
@@ -967,54 +958,13 @@ namespace zsk {
 				if ( operation_string[0] != ' ' ) main_stack.push( std::stod( operation_string, nullptr ) );
 			}
 		}
-		return main_stack.top();
-	}
 
-	int_fast32_t interpreter::evaluate_prn_copy( std::string expression ) {
-		std::string operation_string = "";
-		uint_fast32_t operation_index = 0;
-		int_fast32_t number_a = 0, number_b = 0;
-		std::stack<int_fast32_t> operation_stack = main_stack;
-
-		for ( uint_fast32_t i( 0 ); i < expression.size(); ++i ) {
-			if ( (expression[i] == '+') || (expression[i] == '-') || (expression[i] == '*') || (expression[i] == '/') || (expression[i] == '%') ) {
-				if ( operation_stack.size() > 1 ) {
-					number_a = operation_stack.top();
-					operation_stack.pop();
-					number_b = operation_stack.top();
-					operation_stack.pop();
-
-					if ( expression[i] == '+' ) {
-						operation_stack.push( number_b + number_a );
-						continue;
-					} else if ( expression[i] == '-' ) {
-						operation_stack.push( number_b - number_a );
-						continue;
-					} else if ( expression[i] == '*' ) {
-						operation_stack.push( number_b * number_a );
-						continue;
-					} else if ( expression[i] == '/' ) {
-						operation_stack.push( number_b / number_a );
-						continue;
-					} else if ( expression[i] == '%' ) {
-						operation_stack.push( number_b % number_a );
-						continue;
-					} else {
-						continue;
-					}
-				} else {
-					if ( debug ) {
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
-					}
-					return 0;
-				}
-			} else {
-				operation_index = i;
-				while ( (expression[i] != ' ') && (i < expression.size() - 1) ) { ++i; }
-				operation_string = expression.substr( operation_index, i - operation_index + 1 );
-				if ( operation_string[0] != ' ' ) operation_stack.push( std::stod( operation_string, nullptr ) );
-			}
+		if ( copy ) {
+			int_fast32_t result( main_stack.top() );
+			main_stack = copy_stack;
+			return result;
 		}
-		return operation_stack.top();
+
+		return main_stack.top();
 	}
 }

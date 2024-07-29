@@ -30,8 +30,7 @@ namespace zsk {
 			void run_program();
 
 			// polish reversed notation
-			int_fast32_t evaluate_prn( std::string );
-			int_fast32_t evaluate_prn_copy( std::string );
+			int_fast32_t evaluate_prn( std::string, bool copy = false );
 
 		private:
 			// code instructions

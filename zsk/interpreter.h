@@ -1,12 +1,13 @@
 ﻿/*
-	Krzysztof �uczka, czerwiec 2023
+	Krzysztof Łuczka
 
-	Projekt udost�pniony na licencji OpenSource,
-	stworzony w celach zaliczenia przedmiotu "Programowanie"
-	w Technikum Komunikacji im. Hipolita Cegielskiego w Poznaniu
+	Project released under the MIT license.
+	Originally created for the purpose of passing the "Programowanie" course
+	at the Technikum Komunikacji im. Hipolita Cegielskiego in Poznań.
 */
 #pragma once
 #include <iostream>
+#include <sstream>
 #include <stack>
 #include <vector>
 #include <fstream>
@@ -17,55 +18,52 @@
 namespace zsk {
 	class interpreter {
 		public:
-			// konstruktor
 			interpreter();
-
-			// destruktor
 			~interpreter();
 
-			// g��wna p�tla intepretera, umo�liwiaj�ca kontakt z u�ytkownikiem
+			// main loop
 			void main_loop();
 
-			// funkcja wczytuj�ca program z wbudowanym preprocesorem
-			bool load_program( std::string path );
+			// preprocessor
+			bool load_program( std::string );
 
-			// funkcja wykonuj�ca za�adowany program
+			// running loaded program
 			void run_program();
 
-			// funkcja ewaluuj�ca wynik odwrotnej notacji polskiej
-			int_fast32_t evaluate_prn( std::string expression );
-			int_fast32_t evaluate_prn_copy( std::string expression );
+			// polish reversed notation
+			int_fast32_t evaluate_prn( std::string );
+			int_fast32_t evaluate_prn_copy( std::string );
 
 		private:
-			// kontener na za�adowane indeksy linii kodu
+			// code instructions
 			std::vector<uint_fast8_t> lines;
 
-			// kontener na za�adowane argumenty komend
+			// argument container
 			std::vector<int_fast32_t> arguments;
 
-			// kontener na przechowywanie wyra�e�
+			// expression container
 			std::vector<std::string*> expressions;
 
-			// stos programu
+			// stack
 			std::stack<int_fast32_t> main_stack;
 
-			// wska�nik do pozycji w kodzie
+			// code pointer
 			uint_fast64_t code_position;
 
-			// pseudorejestry do por�wnywania
+			// pseudoregisters
 			int_fast32_t registerA, registerB;
 
-			// liczniki do p�tli
+			// loop counters
 			int_fast32_t loop_counter, loop_amount, loop_code_position, loop_final_position;
 
-			// flagi interpretera
+			// interpreter's flags
 			bool debug;
 	};
 }
 
 /*
-	ID komend:
-		0 -  brak
+	Command id:
+		0 -  none
 		1 -  push
 		2 -  stack
 		3 -  pop

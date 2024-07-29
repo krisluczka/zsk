@@ -6,18 +6,16 @@ namespace zsk {
 		registerA = 0; registerB = 0;
 		loop_counter = 0; loop_amount = 0; loop_code_position = 0; loop_final_position = 0;
 		debug = false;
-		system( "title ZSK23 Interpreter" );
 	}
 
 	interpreter::~interpreter() {
-		for ( uint_fast64_t i = 0; i < expressions.size(); i++ ) {
+		for ( uint_fast64_t i( 0 ); i < expressions.size(); ++i )
 			delete expressions[i];
-		}
 	}
 
 	void interpreter::main_loop() {
 		std::string input;
-		std::cout << "ZSK 23.0, by Krzysztof Luczka" << std::endl;
+		std::cout << "ZSK prerelease 24.0, by Krzysztof Luczka" << std::endl;
 		while ( true ) {
 			std::cout << " >>  ";
 			getline( std::cin, input );
@@ -425,9 +423,9 @@ namespace zsk {
 		if ( debug ) {
 			uint_fast64_t size = lines.size();
 			size += arguments.size() * 4;
-			for ( int_fast64_t i = 0; i < expressions.size(); i++ ) {
+			for ( int_fast64_t i( 0 ); i < expressions.size(); ++i ) 
 				size += expressions[i]->size();
-			}
+
 			std::cout << " Program total size: " << size << " bytes" << std::endl;
 			system( "pause > nul" );
 			system( "cls" );
@@ -694,7 +692,7 @@ namespace zsk {
 				std::string input;
 				int_fast64_t length = 0;
 				std::getline( std::cin, input );
-				for ( int_fast64_t i = input.size() - 1; i >= 0; i-- ) { //for ( int_fast8_t i : input ) {
+				for ( int_fast64_t i( input.size() - 1 ); i >= 0; --i ) { //for ( int_fast8_t i : input ) {
 					if ( input[i] != 0 ) {
 						main_stack.push( int_fast32_t( input[i] ) );
 						length++;
@@ -727,7 +725,7 @@ namespace zsk {
 					std::stack<int_fast32_t> operation_stack = main_stack;
 					std::stack<int_fast32_t> final_stack;
 
-					for ( int_fast32_t i = 0; i < arguments[code_position]; i++ ) {
+					for ( int_fast32_t i( 0 ); i < arguments[code_position]; ++i ) {
 						final_stack.push( operation_stack.top() );
 						operation_stack.pop();
 					}
@@ -751,7 +749,7 @@ namespace zsk {
 			else if ( lines[code_position] == 19 ) {
 				std::string operation_string = *expressions[arguments[code_position]];
 				int_fast64_t length = 0;
-				for ( int_fast64_t i = operation_string.size(); i >= 0; i-- ) { //for ( int_fast8_t i : operation_string ) {
+				for ( int_fast64_t i( operation_string.size() ); i >= 0; --i ) { //for ( int_fast8_t i : operation_string ) {
 					if ( operation_string[i] != 0 ) {
 						if ( operation_string[i] == '~' ) { // znak nowej linii
 							main_stack.push( 10 );
@@ -946,20 +944,20 @@ namespace zsk {
 				if ( arguments[code_position] != -1 ) {
 					if ( arguments[code_position] < max ) max = arguments[code_position];
 					std::stack<int_fast32_t> another_stack;
-					for ( uint_fast64_t i = 0; i < max; i++ ) { // wydzielanie fragmentu stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // wydzielanie fragmentu stosu
 						another_stack.push( main_stack.top() );
 						main_stack.pop();
 					}
-					for ( uint_fast64_t i = 0; i < max; i++ ) { // odwracanie danego fragmentu stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // odwracanie danego fragmentu stosu
 						copy_stack.push( another_stack.top() );
 						another_stack.pop();
 					}
-					for ( uint_fast64_t i = 0; i < max; i++ ) { // aktualizowanie g��wnego stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // aktualizowanie g��wnego stosu
 						main_stack.push( copy_stack.top() );
 						copy_stack.pop();
 					}
 				} else {
-					for ( uint_fast64_t i = 0; i < max; i++ ) {
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) {
 						copy_stack.push( main_stack.top() );
 						main_stack.pop();
 					}
@@ -993,7 +991,7 @@ namespace zsk {
 		uint_fast32_t operation_index = 0;
 		int_fast32_t number_a = 0, number_b = 0;
 
-		for ( uint_fast32_t i = 0; i < expression.size(); i++ ) {
+		for ( uint_fast32_t i( 0 ); i < expression.size(); ++i ) {
 			if ( (expression[i] == '+') || (expression[i] == '-') || (expression[i] == '*') || (expression[i] == '/') || (expression[i] == '%') ) {
 				if ( main_stack.size() > 1 ) {
 					number_a = main_stack.top();
@@ -1041,7 +1039,7 @@ namespace zsk {
 		int_fast32_t number_a = 0, number_b = 0;
 		std::stack<int_fast32_t> operation_stack = main_stack;
 
-		for ( uint_fast32_t i = 0; i < expression.size(); i++ ) {
+		for ( uint_fast32_t i( 0 ); i < expression.size(); ++i ) {
 			if ( (expression[i] == '+') || (expression[i] == '-') || (expression[i] == '*') || (expression[i] == '/') || (expression[i] == '%') ) {
 				if ( operation_stack.size() > 1 ) {
 					number_a = operation_stack.top();

@@ -114,7 +114,7 @@ namespace zsk {
 			}
 
 			// calc - evaluating an expression
-			else if ( code_line.substr( 0, 4 ) == "calc" ) {
+			else if ( tokens[0] == "calc" ) {
 				lines.push_back( 5 );
 				std::string* calcval( new std::string );
 				for ( uint_fast64_t i( 1 ); i < tokens.size(); ++i )
@@ -251,7 +251,7 @@ namespace zsk {
 			}
 
 			// copy - copying given amount of stack numbers
-			else if ( code_line.substr( 0, 4 ) == "copy" ) {
+			else if ( tokens[0] == "copy" ) {
 				lines.push_back( 17 );
 				if ( tokens.size() > 1 )
 					arguments.push_back( std::stoi( tokens[1] ) );
@@ -277,7 +277,7 @@ namespace zsk {
 			}
 
 			// string - pushing ascii characters onto stack
-			else if ( code_line.substr( 0, 6 ) == "string" ) {
+			else if ( tokens[0] == "string" ) {
 				lines.push_back( 19 );
 				std::string* strval = new std::string;
 				*strval = code_line.substr( 7, 4096 );
@@ -402,32 +402,29 @@ namespace zsk {
 	void interpreter::run_program() {
 		srand( time( NULL ) );
 
-		// dodatkowe informacje wy�wietlane w trybie debugowania
+		// additional info about debugging mode
 		if ( debug ) {
 			uint_fast64_t size = lines.size();
 			size += arguments.size() * 4;
 			for ( int_fast64_t i( 0 ); i < expressions.size(); ++i ) 
 				size += expressions[i]->size();
 
-			std::cout << " Program total size: " << size << " bytes" << std::endl;
-			system( "pause > nul" );
-			system( "cls" );
+			std::cout << " Program total size: " << size << " bytes\n";
 		}
 		while ( code_position < lines.size() ) {
 			if ( debug ) std::cout << ":" << main_stack.size() * 4 << "B: ";
 
-			// b��dna linijka - omijamy j�
-			if ( lines[code_position] == 0 ) {
-				code_position++;
-			}
+			// error line
+			if ( lines[code_position] == 0 )
+				++code_position;
 
-			// wrzucanie liczby na stos
+			// pushing number onto stack
 			else if ( lines[code_position] == 1 ) {
 				main_stack.push( arguments[code_position] );
-				code_position++;
+				++code_position;
 			}
 
-			// wy�wietlanie stosu
+			// displaying the stack
 			else if ( lines[code_position] == 2 ) {
 				std::stack<int_fast32_t> copy_stack = main_stack;
 				if ( arguments[code_position] != -1 ) {
@@ -435,7 +432,7 @@ namespace zsk {
 					while ( !copy_stack.empty() && (stack_index < arguments[code_position]) ) {
 						std::cout << copy_stack.top() << " ";
 						copy_stack.pop();
-						stack_index++;
+						++stack_index;
 					}
 				} else {
 					while ( !copy_stack.empty() ) {
@@ -443,77 +440,77 @@ namespace zsk {
 						copy_stack.pop();
 					}
 				}
-				code_position++;
+				++code_position;
 			}
 
-			// wywalenie liczby ze stosu
+			// poppin the number
 			else if ( lines[code_position] == 3 ) {
 				if ( !main_stack.empty() ) main_stack.pop();
-				code_position++;
+				++code_position;
 			}
 
-			// wydrukowanie kodu ascii ze stosu
+			// printing ascii character
 			else if ( lines[code_position] == 4 ) {
 				if ( main_stack.size() > 1 ) {
-					uint_fast64_t stack_index = 0;
+					uint_fast64_t stack_index( 0 );
 					if ( arguments[code_position] != -1 ) {
 						main_stack.pop();
 						while ( !main_stack.empty() && (stack_index < arguments[code_position]) ) {
 							std::cout << (char)main_stack.top();
 							main_stack.pop();
-							stack_index++;
+							++stack_index;
 						}
 					} else {
 						stack_index = main_stack.top();
 						main_stack.pop();
-						uint_fast64_t helper_value = 0;
+						uint_fast64_t helper_value( 0 );
 						while ( !main_stack.empty() && (helper_value < stack_index) ) {
 							std::cout << (char)main_stack.top();
 							main_stack.pop();
-							helper_value++;
+							++helper_value;
 						}
 					}
 				} else if ( debug ) {
-					std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+					std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 				}
-				code_position++;
+				++code_position;
 			}
 
-			// obliczanie wyra�enia w notacji PRN
+			// expression evaluation
 			else if ( lines[code_position] == 5 ) {
 				evaluate_prn( *expressions[arguments[code_position]] );
 				code_position++;
 			}
 
-			// usuwanie niszczenie w�tku
+			// killswitch
 			else if ( lines[code_position] == 6 ) {
 				break;
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� r�wne
+			// comparing two numbers
 			else if ( lines[code_position] == 7 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
 					main_stack.pop();
 					registerB = main_stack.top();
 					main_stack.pop();
-					// kontynuujemy kod je�eli warunek jest spe�niony
+
+					// staying if the expression is true
 					if ( registerB == registerA ) {
-						code_position++;
+						++code_position;
 						continue;
 					}
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
+					// jumping if the expression is false
 					else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest wi�ksza od m�odszej
 			else if ( lines[code_position] == 8 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -521,24 +518,19 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB > registerA ) {
-						code_position++;
+						++code_position;
 						continue;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest mniejsza od m�odszej
 			else if ( lines[code_position] == 9 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -546,24 +538,19 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB < registerA ) {
-						code_position++;
+						++code_position;
 						continue;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest wi�ksza lub r�wna od m�odszej
 			else if ( lines[code_position] == 10 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -571,24 +558,19 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB >= registerA ) {
-						code_position++;
+						++code_position;
 						continue;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest mniejsza lub r�wna od m�odszej
 			else if ( lines[code_position] == 11 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -596,24 +578,19 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB <= registerA ) {
-						code_position++;
+						++code_position;
 						continue;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest r�na od m�odszej
 			else if ( lines[code_position] == 12 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -621,29 +598,25 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB != registerA ) {
-						code_position++;
+						++code_position;
 						continue;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// zap�tla kod bloku dan� ilo�� razy
+			// looping the code given amount of times
 			else if ( lines[code_position] == 13 ) {
 				if ( arguments[code_position] != -1 ) {
 					if ( main_stack.size() > 0 ) {
 
-						// ustawianie parametr�w p�tli
+						// the loop parameters
 						if ( loop_amount == 0 ) {
 							loop_amount = main_stack.top();
 							main_stack.pop();
@@ -652,55 +625,53 @@ namespace zsk {
 							loop_final_position = code_position + arguments[code_position];
 						}
 
-						// wychodzenie z p�tli
-						else {
-							if ( loop_counter == loop_amount ) {
-								loop_amount = 0;
-								code_position = loop_final_position;
-							}
+						// getting out
+						else if ( loop_counter == loop_amount ) {
+							loop_amount = 0;
+							code_position = loop_final_position;
 						}
 					} else {
 						if ( debug )
-							std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+							std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					}
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid block length, this line will repeat forever.\n";
 				}
-				code_position++;
+				++code_position;
 			}
 
-			// pobiera tekst od u�ytkownika i wrzuca na stos
+			// string get
 			else if ( lines[code_position] == 14 ) {
 				std::string input;
-				int_fast64_t length = 0;
+				int_fast64_t length( 0 );
 				std::getline( std::cin, input );
-				for ( int_fast64_t i( input.size() - 1 ); i >= 0; --i ) { //for ( int_fast8_t i : input ) {
+				for ( int_fast64_t i( input.size() - 1 ); i >= 0; --i ) {
 					if ( input[i] != 0 ) {
 						main_stack.push( int_fast32_t( input[i] ) );
-						length++;
+						++length;
 					}
 				}
 				main_stack.push( length );
-				code_position++;
+				++code_position;
 			}
 
-			// pobiera liczb� od u�ytkownika i wrzuca na stos
+			// number get
 			else if ( lines[code_position] == 15 ) {
 				std::string input;
 				std::getline( std::cin, input );
 				main_stack.push( std::stoi( input ) );
-				code_position++;
+				++code_position;
 			}
 
-			// wykonuje skok bezwarunkowy
+			// unconditional jump
 			else if ( lines[code_position] == 16 ) {
 				if ( arguments[code_position] > 0 ) {
 					code_position = arguments[code_position] - 1;
 				}
 			}
 
-			// kopiuje najm�odsz� liczb� stosu
+			// copying given amount of numbers from stack
 			else if ( lines[code_position] == 17 ) {
 				if ( arguments[code_position] != -1 ) {
 					if ( arguments[code_position] > main_stack.size() ) arguments[code_position] = main_stack.size();
@@ -719,31 +690,32 @@ namespace zsk {
 				} else {
 					main_stack.push( main_stack.top() );
 				}
-				code_position++;
+
+				++code_position;
 			}
 
-			// obliczanie wyra�enia w notacji PRN ( z kopi� stosu )
+			// rpn with stack copy
 			else if ( lines[code_position] == 18 ) {
 				main_stack.push( evaluate_prn_copy( *expressions[arguments[code_position]] ) );
-				code_position++;
+				++code_position;
 			}
 
-			// wrzuca przygotowanego stringa na stos
+			// pushing string onto stack
 			else if ( lines[code_position] == 19 ) {
 				std::string operation_string = *expressions[arguments[code_position]];
-				int_fast64_t length = 0;
-				for ( int_fast64_t i( operation_string.size() ); i >= 0; --i ) { //for ( int_fast8_t i : operation_string ) {
+				int_fast64_t length( 0 );
+				for ( int_fast64_t i( operation_string.size() ); i >= 0; --i ) {
 					if ( operation_string[i] != 0 ) {
-						if ( operation_string[i] == '~' ) { // znak nowej linii
+						if ( operation_string[i] == '~' ) { // newline
 							main_stack.push( 10 );
 						} else {
 							main_stack.push( int_fast32_t( operation_string[i] ) );
 						}
-						length++;
+						++length;
 					}
 				}
 				main_stack.push( length );
-				code_position++;
+				++code_position;
 			}
 
 			// por�wnuje dwie liczby ze stosu i sprawdza czy s� r�wne
@@ -756,10 +728,9 @@ namespace zsk {
 
 					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB == registerA ) {
-						code_position++;
+						++code_position;
 					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
+					
 					else {
 						code_position += arguments[code_position] + 1;
 					}
@@ -772,7 +743,7 @@ namespace zsk {
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest wi�ksza od m�odszej
+			// comparing two numbers with copy
 			else if ( lines[code_position] == 21 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -780,12 +751,12 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
-					if ( registerB > registerA ) {
-						code_position++;
+					// staying if the expression is true
+					if ( registerB == registerA ) {
+						++code_position;
+						continue;
 					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
+					// jumping if the expression is false
 					else {
 						code_position += arguments[code_position] + 1;
 					}
@@ -793,12 +764,11 @@ namespace zsk {
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest mniejsza od m�odszej
 			else if ( lines[code_position] == 22 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -806,25 +776,20 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB < registerA ) {
-						code_position++;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+						++code_position;
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 					main_stack.push( registerB );
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest wi�ksza lub r�wna od m�odszej
 			else if ( lines[code_position] == 23 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -832,25 +797,20 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB >= registerA ) {
-						code_position++;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+						++code_position;
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 					main_stack.push( registerB );
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest mniejsza lub r�wna od m�odszej
 			else if ( lines[code_position] == 24 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -858,13 +818,9 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB <= registerA ) {
-						code_position++;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+						++code_position;
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 					main_stack.push( registerB );
@@ -876,7 +832,6 @@ namespace zsk {
 				}
 			}
 
-			// por�wnuje dwie liczby ze stosu i sprawdza czy s� starsza jest r�na od m�odszej
 			else if ( lines[code_position] == 25 ) {
 				if ( main_stack.size() > 1 ) {
 					registerA = main_stack.top();
@@ -884,25 +839,21 @@ namespace zsk {
 					registerB = main_stack.top();
 					main_stack.pop();
 
-					// kontynuujemy kod je�eli warunek jest spe�niony
 					if ( registerB != registerA ) {
-						code_position++;
-					}
-
-					// skaczemy o dan� ilo�� linijek, je�eli warunek nie jest spe�niony
-					else {
+						++code_position;
+					} else {
 						code_position += arguments[code_position] + 1;
 					}
 					main_stack.push( registerB );
 					main_stack.push( registerA );
 				} else {
 					if ( debug )
-						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+						std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					code_position += arguments[code_position] + 1;
 				}
 			}
 
-			// losuje liczb� ze wskazanego zakresu
+			// randomizing a number
 			else if ( lines[code_position] == 26 ) {
 				if ( arguments[code_position] != -1 ) {
 					main_stack.push( rand() % arguments[code_position] );
@@ -910,32 +861,35 @@ namespace zsk {
 					if ( main_stack.size() > 0 ) {
 						registerA = main_stack.top();
 						main_stack.pop();
-						main_stack.push( rand() % registerA );
+						std::random_device rd;
+						std::mt19937 mt( rd() );
+						std::uniform_int_distribution<uint_fast64_t> random( 0, registerA );
+						main_stack.push( random(mt) );
 					} else {
 						main_stack.push( 0 );
 						if ( debug )
-							std::cout << " line " << lines.size() << ": Invalid operation, stack is too short." << std::endl;
+							std::cout << " line " << lines.size() << ": Invalid operation, stack is too short.\n";
 					}
 				}
-				code_position++;
+				++code_position;
 			}
 
-			// odwracanie stosu
+			// reversing the stack
 			else if ( lines[code_position] == 27 ) {
 				std::stack<int_fast32_t> copy_stack;
 				uint_fast64_t max = main_stack.size();
 				if ( arguments[code_position] != -1 ) {
 					if ( arguments[code_position] < max ) max = arguments[code_position];
 					std::stack<int_fast32_t> another_stack;
-					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // wydzielanie fragmentu stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // portioning the stack
 						another_stack.push( main_stack.top() );
 						main_stack.pop();
 					}
-					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // odwracanie danego fragmentu stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // reversing given chunk
 						copy_stack.push( another_stack.top() );
 						another_stack.pop();
 					}
-					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // aktualizowanie g��wnego stosu
+					for ( uint_fast64_t i( 0 ); i < max; ++i ) { // pushing the updated chunk onto stack
 						main_stack.push( copy_stack.top() );
 						copy_stack.pop();
 					}
@@ -946,24 +900,24 @@ namespace zsk {
 					}
 					main_stack = copy_stack;
 				}
-				code_position++;
+				++code_position;
 			}
 
-			// wielko�� stosu
+			// stack size
 			else if ( lines[code_position] == 28 ) {
 				main_stack.push( main_stack.size() );
-				code_position++;
+				++code_position;
 			}
 
-			// obs�ugiwanie p�tli
+			// the loop
 			if ( loop_amount != 0 ) {
 				if ( code_position > loop_final_position ) {
 					code_position = loop_code_position;
-					loop_counter++;
+					++loop_counter;
 				}
 			}
 		}
-		system( "pause > nul" );
+		system( "pause > nul" ); // ?
 	}
 
 	/*
@@ -1008,7 +962,7 @@ namespace zsk {
 				}
 			} else {
 				operation_index = i;
-				while ( (expression[i] != ' ') && (i < expression.size() - 1) ) { i++; }
+				while ( (expression[i] != ' ') && (i < expression.size() - 1) ) { ++i; }
 				operation_string = expression.substr( operation_index, i - operation_index + 1 );
 				if ( operation_string[0] != ' ' ) main_stack.push( std::stod( operation_string, nullptr ) );
 			}
@@ -1056,7 +1010,7 @@ namespace zsk {
 				}
 			} else {
 				operation_index = i;
-				while ( (expression[i] != ' ') && (i < expression.size() - 1) ) { i++; }
+				while ( (expression[i] != ' ') && (i < expression.size() - 1) ) { ++i; }
 				operation_string = expression.substr( operation_index, i - operation_index + 1 );
 				if ( operation_string[0] != ' ' ) operation_stack.push( std::stod( operation_string, nullptr ) );
 			}

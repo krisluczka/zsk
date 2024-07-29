@@ -12,8 +12,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
-#include <time.h>
+#include <random>
 
 namespace zsk {
 	class interpreter {

@@ -17,7 +17,7 @@ namespace zsk {
 
 	void interpreter::main_loop() {
 		std::string input;
-		std::cout << "ZSK 1.0, by Krzysztof Luczka" << std::endl;
+		std::cout << "ZSK 23.0, by Krzysztof Luczka" << std::endl;
 		while ( true ) {
 			std::cout << " >>  ";
 			getline( std::cin, input );
